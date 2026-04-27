@@ -45,7 +45,7 @@
 .admin-cats button.active { color: white; background: linear-gradient(135deg,#4f8cff,#8b5cf6); }
 .sort-list { display: grid; gap: 12px; }
 .sort-card {
-  display: grid; grid-template-columns: 42px 28px 52px 1fr auto auto; gap: 14px; align-items: center;
+  display: grid; grid-template-columns: 42px 28px 52px 1fr auto auto auto; gap: 14px; align-items: center;
   padding: 14px 16px; border-radius: 20px; background: rgba(255,255,255,.82); border: 1px solid rgba(148,163,184,.16);
   cursor: grab; transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, border-color .18s ease;
 }
@@ -58,6 +58,8 @@
 .sort-info strong { display: block; font-size: 17px; }
 .sort-info p { margin: 5px 0 0; color: #64748b; }
 .sort-tag { color: #5b6ee1; background: #eef3fb; padding: 7px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+.sort-private { color: #dc2626; background: #fee2e2; padding: 7px 10px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+
 @media (max-width: 860px) {
   .admin-shell { grid-template-columns: 1fr; padding: 14px; }
   .admin-sidebar { position: static; height: auto; }

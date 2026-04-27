@@ -20,7 +20,7 @@ createApp({
       })
     })
     const categoryCount = (name) => name === '全部' ? links.value.length : links.value.filter((item) => item.category === name).length
-    const openLink = (url) => window.open(url, '_blank', 'noopener,noreferrer')
+    const openLink = (item) => window.open(`/go/${item.id}`, '_blank', 'noopener,noreferrer')
 
     onMounted(async () => {
       const res = await fetch('/api/nav')
@@ -56,9 +56,9 @@ createApp({
       <section class="links-section">
         <div class="section-head"><div><p>当前展示</p><h2>{{ activeCategory }} · {{ filteredLinks.length }} 个入口</h2></div><span>SQLite 数据驱动</span></div>
         <div class="link-grid">
-          <article v-for="item in filteredLinks" :key="item.id" class="link-card" @click="openLink(item.url)">
+          <article v-for="item in filteredLinks" :key="item.id" class="link-card" @click="openLink(item)">
             <div class="icon-wrap" :style="{ '--accent': item.color }">{{ iconText[item.icon] || '✦' }}</div>
-            <div class="card-body"><div class="card-title"><h3>{{ item.name }}</h3><span>↗</span></div><p>{{ item.description }}</p><span>{{ item.category }}</span></div>
+            <div class="card-body"><div class="card-title"><h3>{{ item.name }}</h3><span v-if="item.visibility === 'private'" class="private-badge">私密</span><span>↗</span></div><p>{{ item.description }}</p><span>{{ item.category }}</span></div>
           </article>
         </div>
         <div v-if="!filteredLinks.length" class="empty-state">没有找到匹配的入口，换个关键词试试看。</div>

@@ -35,6 +35,7 @@ function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT, category_id INTEGER NOT NULL,
       name TEXT NOT NULL, url TEXT NOT NULL, icon TEXT DEFAULT 'Sparkles', color TEXT DEFAULT '#4f8cff',
       description TEXT, sort INTEGER DEFAULT 0, visible INTEGER DEFAULT 1,
+      visibility TEXT DEFAULT 'public',
       FOREIGN KEY (category_id) REFERENCES categories(id)
     );
     CREATE TABLE IF NOT EXISTS admin_users (
@@ -42,6 +43,9 @@ function initDb() {
       password_hash TEXT NOT NULL, token TEXT
     );
   `)
+  const linkColumns = db.prepare('PRAGMA table_info(links)').all().map((col) => col.name)
+  if (!linkColumns.includes('visibility')) db.exec(`ALTER TABLE links ADD COLUMN visibility TEXT DEFAULT 'public'`)
+
   db.prepare(`INSERT OR IGNORE INTO site_config (id,title,subtitle,logo_text,footer) VALUES (1,?,?,?,?)`)
     .run('清漪导航', '前台优雅展示，后台自由配置；让工具、文档与灵感各归其位。', '清', 'Powered by Vue 3 + Node.js + SQLite')
   db.prepare(`INSERT OR IGNORE INTO admin_users (username,password_hash) VALUES (?,?)`).run(adminUser, sha256(adminPassword))
@@ -66,12 +70,14 @@ function initDb() {
   rows.forEach((r, i) => db.prepare('INSERT INTO links (name,url,icon,color,description,category_id,sort) VALUES (?,?,?,?,?,?,?)').run(r[0], r[1], r[2], r[3], r[4], catMap[r[5]], i + 1))
 }
 
-function getPublicData() {
+function getPublicData(req) {
+  const authed = isAuthed(req)
   const site = db.prepare('SELECT title,subtitle,logo_text,footer FROM site_config WHERE id=1').get()
   const categories = db.prepare('SELECT id,name,sort FROM categories WHERE visible=1 ORDER BY sort,id').all()
-  const links = db.prepare(`SELECT l.id,l.name,l.url,l.icon,l.color,l.description,l.category_id,c.name AS category
-    FROM links l JOIN categories c ON c.id=l.category_id WHERE l.visible=1 AND c.visible=1 ORDER BY c.sort,l.sort,l.id`).all()
-  return { site, categories, links }
+  const links = db.prepare(`SELECT l.id,l.name,l.url,l.icon,l.color,l.description,l.category_id,l.visibility,c.name AS category
+    FROM links l JOIN categories c ON c.id=l.category_id
+    WHERE l.visible=1 AND c.visible=1 AND (?=1 OR l.visibility='public') ORDER BY c.sort,l.sort,l.id`).all(authed ? 1 : 0)
+  return { site, categories, links, authed: !!authed }
 }
 
 async function body(req) {
@@ -86,7 +92,7 @@ function isAuthed(req) {
 
 
 async function api(req, res, pathname) {
-  if (req.method === 'GET' && pathname === '/api/nav') return json(res, getPublicData())
+  if (req.method === 'GET' && pathname === '/api/nav') return json(res, getPublicData(req))
   if (req.method === 'POST' && pathname === '/api/admin/login') {
     const d = await body(req)
     const user = db.prepare('SELECT id FROM admin_users WHERE username=? AND password_hash=?').get(d.username, sha256(d.password || ''))
@@ -137,15 +143,15 @@ async function api(req, res, pathname) {
   }
   if (req.method === 'POST' && pathname === '/api/admin/links') {
     const d = await body(req)
-    const info = db.prepare('INSERT INTO links (category_id,name,url,icon,color,description,sort,visible) VALUES (?,?,?,?,?,?,?,?)')
-      .run(d.category_id, d.name, d.url, d.icon ?? 'Sparkles', d.color ?? '#4f8cff', d.description ?? '', d.sort ?? 99, d.visible ?? 1)
+    const info = db.prepare('INSERT INTO links (category_id,name,url,icon,color,description,sort,visible,visibility) VALUES (?,?,?,?,?,?,?,?,?)')
+      .run(d.category_id, d.name, d.url, d.icon ?? 'Sparkles', d.color ?? '#4f8cff', d.description ?? '', d.sort ?? 99, d.visible ?? 1, d.visibility ?? 'public')
     return json(res, { id: info.lastInsertRowid })
   }
   const linkMatch = pathname.match(/^\/api\/admin\/links\/([0-9]+)$/)
   if (linkMatch && req.method === 'PUT') {
     const d = await body(req)
-    db.prepare('UPDATE links SET category_id=?,name=?,url=?,icon=?,color=?,description=?,visible=? WHERE id=?')
-      .run(d.category_id, d.name, d.url, d.icon ?? 'Sparkles', d.color ?? '#4f8cff', d.description ?? '', d.visible ?? 1, Number(linkMatch[1]))
+    db.prepare('UPDATE links SET category_id=?,name=?,url=?,icon=?,color=?,description=?,visible=?,visibility=? WHERE id=?')
+      .run(d.category_id, d.name, d.url, d.icon ?? 'Sparkles', d.color ?? '#4f8cff', d.description ?? '', d.visible ?? 1, d.visibility ?? 'public', Number(linkMatch[1]))
     return json(res, { success: true })
   }
   if (linkMatch && req.method === 'DELETE') {
@@ -160,6 +166,17 @@ async function api(req, res, pathname) {
   }
   json(res, { message: 'Not Found' }, 404)
 }
+function redirectToLink(req, res, id) {
+  const link = db.prepare('SELECT url,visibility,visible FROM links WHERE id=?').get(id)
+  if (!link || !link.visible) return json(res, { message: '入口不存在' }, 404)
+  if (link.visibility === 'private' && !isAuthed(req)) {
+    res.writeHead(302, { Location: '/login.html' })
+    return res.end()
+  }
+  res.writeHead(302, { Location: link.url })
+  res.end()
+}
+
 
 async function staticFile(res, pathname) {
   const target = pathname === '/' ? '/index.html' : pathname
@@ -176,6 +193,8 @@ async function staticFile(res, pathname) {
 initDb()
 createServer(async (req, res) => {
   const { pathname } = new URL(req.url, `http://${req.headers.host}`)
+  const goMatch = pathname.match(/^\/go\/([0-9]+)$/)
+  if (goMatch) return redirectToLink(req, res, Number(goMatch[1]))
   if (pathname.startsWith('/api/')) return api(req, res, pathname).catch((e) => json(res, { message: e.message }, 500))
   await staticFile(res, pathname)
 }).listen(port, () => console.log(`清漪导航已启动：http://localhost:${port}`))

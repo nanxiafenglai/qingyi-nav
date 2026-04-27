@@ -61,11 +61,25 @@ admin / admin123
 ```
 
 首次启动会自动创建 SQLite 数据库；Docker 部署时请保留 `./data` 目录以持久化数据。
+## 私密入口
+
+入口支持两种可见范围：
+
+```text
+public  公开，访客可见
+private 私密，仅管理员登录后可见
+```
+
+前台点击入口统一走 `/go/:id`。私密入口未登录时会跳转到登录页，未登录的 `/api/nav` 也不会返回私密入口。
+
+
 
 ## 当前接口
 
 ```text
 GET  /api/nav
+GET  /go/:id
+
 POST /api/admin/login
 POST /api/admin/logout
 PUT  /api/admin/password

@@ -97,6 +97,8 @@ h1 { margin: 8px 0; font-size: clamp(28px, 4.2vw, 46px); line-height: 1.12; lett
 .card-title h3 { margin: 0; font-size: 18px; }
 .card-body p { margin: 8px 0 12px; color: #64748b; line-height: 1.5; }
 .card-body span { color: #5b6ee1; font-size: 13px; font-weight: 700; }
+.private-badge { color: #dc2626 !important; background: #fee2e2; padding: 3px 8px; border-radius: 999px; font-size: 12px !important; }
+
 .empty-state { padding: 46px; color: #64748b; text-align: center; }
 .site-footer { max-width: 1180px; margin: 18px auto 0; text-align: center; color: #94a3b8; font-size: 13px; }
 

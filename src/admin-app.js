@@ -13,7 +13,7 @@ createApp({
     const savedText = ref('')
     const editingId = ref(null)
     const categoryEditingId = ref(null)
-    const form = ref({ category_id: '', name: '', url: '', icon: 'Sparkles', color: '#4f8cff', description: '', visible: 1 })
+    const form = ref({ category_id: '', name: '', url: '', icon: 'Sparkles', color: '#4f8cff', description: '', visible: 1, visibility: 'public' })
     const categoryForm = ref({ name: '', sort: 99, visible: 1 })
     const siteForm = ref({ title: '', subtitle: '', logo_text: '清', footer: '' })
     const passwordForm = ref({ oldPassword: '', newPassword: '' })
@@ -62,11 +62,11 @@ createApp({
     }
     function resetForm() {
       editingId.value = null
-      form.value = { category_id: categories.value[0]?.id || '', name: '', url: '', icon: 'Sparkles', color: '#4f8cff', description: '', visible: 1 }
+      form.value = { category_id: categories.value[0]?.id || '', name: '', url: '', icon: 'Sparkles', color: '#4f8cff', description: '', visible: 1, visibility: 'public' }
     }
     function editLink(item) {
       editingId.value = item.id
-      form.value = { category_id: item.category_id, name: item.name, url: item.url, icon: item.icon, color: item.color, description: item.description, visible: 1 }
+      form.value = { category_id: item.category_id, name: item.name, url: item.url, icon: item.icon, color: item.color, description: item.description, visible: 1, visibility: item.visibility || 'public' }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
     async function submitLink() {
@@ -176,6 +176,8 @@ createApp({
         <label>分类<select v-model="form.category_id" required><option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option></select></label>
         <label>图标<select v-model="form.icon"><option>Code2</option><option>Cloud</option><option>ShieldCheck</option><option>Sparkles</option><option>Gauge</option><option>Palette</option></select></label>
         <label>颜色<input v-model="form.color" type="color" /></label>
+        <label>可见范围<select v-model="form.visibility"><option value="public">公开</option><option value="private">仅自己可见</option></select></label>
+
         <label class="wide">描述<input v-model="form.description" placeholder="一句话说明这个入口" /></label>
         <button class="submit-btn" type="submit">{{ editingId ? '保存修改' : '新增入口' }}</button>
       </form>
@@ -216,6 +218,7 @@ createApp({
           <div class="sort-icon" :style="{ '--accent': item.color }">{{ iconText[item.icon] || '✦' }}</div>
           <div class="sort-info"><strong>{{ item.name }}</strong><p>{{ item.description }}</p></div>
           <span class="sort-tag">{{ item.category }}</span>
+          <span v-if="item.visibility === 'private'" class="sort-private">私密</span>
           <div class="row-actions">
             <button @click="editLink(item)" type="button">编辑</button>
             <button class="danger" @click="deleteLink(item.id)" type="button">删除</button>
