@@ -25,7 +25,7 @@ function initDb() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS site_config (
       id INTEGER PRIMARY KEY CHECK (id = 1), title TEXT NOT NULL, subtitle TEXT,
-      logo_text TEXT DEFAULT '清', footer TEXT
+      logo_text TEXT DEFAULT '清', footer TEXT, admin_path TEXT DEFAULT '/admin'
     );
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE,
@@ -45,6 +45,9 @@ function initDb() {
   `)
   const linkColumns = db.prepare('PRAGMA table_info(links)').all().map((col) => col.name)
   if (!linkColumns.includes('visibility')) db.exec(`ALTER TABLE links ADD COLUMN visibility TEXT DEFAULT 'public'`)
+
+  const siteColumns = db.prepare('PRAGMA table_info(site_config)').all().map((col) => col.name)
+  if (!siteColumns.includes('admin_path')) db.exec(`ALTER TABLE site_config ADD COLUMN admin_path TEXT DEFAULT '/admin'`)
 
   db.prepare(`INSERT OR IGNORE INTO site_config (id,title,subtitle,logo_text,footer) VALUES (1,?,?,?,?)`)
     .run('清漪导航', '前台优雅展示，后台自由配置；让工具、文档与灵感各归其位。', '清', 'Powered by Vue 3 + Node.js + SQLite')
@@ -72,7 +75,7 @@ function initDb() {
 
 function getPublicData(req) {
   const authed = isAuthed(req)
-  const site = db.prepare('SELECT title,subtitle,logo_text,footer FROM site_config WHERE id=1').get()
+  const site = db.prepare('SELECT title,subtitle,logo_text,footer,admin_path FROM site_config WHERE id=1').get()
   const categories = db.prepare('SELECT id,name,sort FROM categories WHERE visible=1 ORDER BY sort,id').all()
   const links = db.prepare(`SELECT l.id,l.name,l.url,l.icon,l.color,l.description,l.category_id,l.visibility,c.name AS category
     FROM links l JOIN categories c ON c.id=l.category_id
@@ -119,8 +122,9 @@ async function api(req, res, pathname) {
 
   if (req.method === 'PUT' && pathname === '/api/admin/site-config') {
     const d = await body(req)
-    db.prepare('UPDATE site_config SET title=?,subtitle=?,logo_text=?,footer=? WHERE id=1')
-      .run(d.title, d.subtitle ?? '', d.logo_text ?? '清', d.footer ?? '')
+    const adminPath = String(d.admin_path || '/admin').trim().replace(/\/$/, '') || '/admin'
+    db.prepare('UPDATE site_config SET title=?,subtitle=?,logo_text=?,footer=?,admin_path=? WHERE id=1')
+      .run(d.title, d.subtitle ?? '', d.logo_text ?? '清', d.footer ?? '', adminPath.startsWith('/') ? adminPath : `/${adminPath}`)
     return json(res, { success: true })
   }
 
@@ -195,6 +199,9 @@ createServer(async (req, res) => {
   const { pathname } = new URL(req.url, `http://${req.headers.host}`)
   const goMatch = pathname.match(/^\/go\/([0-9]+)$/)
   if (goMatch) return redirectToLink(req, res, Number(goMatch[1]))
+  const adminPath = db.prepare("SELECT admin_path FROM site_config WHERE id=1").get()?.admin_path || '/admin'
+  if (pathname === adminPath || pathname === `${adminPath}/`) return staticFile(res, '/admin.html')
+
   if (pathname.startsWith('/api/')) return api(req, res, pathname).catch((e) => json(res, { message: e.message }, 500))
   await staticFile(res, pathname)
 }).listen(port, () => console.log(`清漪导航已启动：http://localhost:${port}`))

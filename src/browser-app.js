@@ -37,7 +37,7 @@ createApp({
     <section class="hero-panel">
       <nav class="topbar">
         <div class="brand"><div class="logo">{{ site.logo_text }}</div><div><strong>{{ site.title }}</strong><span>Qingyi Nav</span></div></div>
-        <button class="admin-entry" onclick="location.href='/admin.html'">⚙ 后台配置</button>
+
       </nav>
       <div class="hero-content">
         <p class="eyebrow">✦ 为主人聚合常用入口</p>

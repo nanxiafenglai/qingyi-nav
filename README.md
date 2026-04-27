@@ -23,7 +23,7 @@ node server.js
 
 ```text
 前台：http://localhost:5173
-后台：http://localhost:5173/admin.html
+后台：http://localhost:5173/admin
 登录：http://localhost:5173/login.html
 ```
 
@@ -61,6 +61,9 @@ admin / admin123
 ```
 
 首次启动会自动创建 SQLite 数据库；Docker 部署时请保留 `./data` 目录以持久化数据。
+后台路径默认是 `/admin`，可在后台「站点配置」中修改；`/admin.html` 只是内部文件，不建议作为访问入口。
+
+
 ## 私密入口
 
 入口支持两种可见范围：

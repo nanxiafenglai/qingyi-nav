@@ -15,7 +15,7 @@ createApp({
     const categoryEditingId = ref(null)
     const form = ref({ category_id: '', name: '', url: '', icon: 'Sparkles', color: '#4f8cff', description: '', visible: 1, visibility: 'public' })
     const categoryForm = ref({ name: '', sort: 99, visible: 1 })
-    const siteForm = ref({ title: '', subtitle: '', logo_text: '清', footer: '' })
+    const siteForm = ref({ title: '', subtitle: '', logo_text: '清', footer: '', admin_path: '/admin' })
     const passwordForm = ref({ oldPassword: '', newPassword: '' })
     const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('nav_token') || ''}` })
     const authJsonHeaders = () => ({ 'Content-Type': 'application/json', ...authHeaders() })
@@ -155,9 +155,11 @@ createApp({
         <span>{{ savedText || '松手后自动保存' }}</span>
       </div>
       <form class="site-form" @submit.prevent="submitSite">
-        <div class="form-title"><strong>站点配置</strong><span>会同步到前台首页</span></div>
+        <div class="form-title"><strong>站点配置</strong><span>后台路径默认 /admin，保存后用新路径访问</span></div>
         <label>站点标题<input v-model="siteForm.title" required /></label>
         <label>Logo 字<input v-model="siteForm.logo_text" maxlength="2" /></label>
+        <label>后台路径<input v-model="siteForm.admin_path" required placeholder="/admin" /></label>
+
         <label class="wide">副标题<input v-model="siteForm.subtitle" /></label>
         <label class="wide">页脚<input v-model="siteForm.footer" /></label>
         <button class="submit-btn" type="submit">保存站点配置</button>
