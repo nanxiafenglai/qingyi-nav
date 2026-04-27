@@ -1,0 +1,14 @@
+services:
+  qingyi-nav:
+    build: .
+    container_name: qingyi-nav
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      PORT: 5173
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+
+    volumes:
+      - ./data:/app/data
