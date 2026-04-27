@@ -96,4 +96,4 @@ DELETE /api/admin/links/:id
 PUT  /api/admin/links/sort
 ```
 
-入口卡片在前台只负责访问；后台 `/admin.html` 中支持拖拽排序，拖动后会写回 SQLite 的 `links.sort` 字段。
+入口卡片在前台只负责访问；后台 `/admin` 中支持拖拽排序，拖动后会写回 SQLite 的 `links.sort` 字段。
