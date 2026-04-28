@@ -38,8 +38,27 @@ cp .env.example .env
 
 ## Docker 部署
 
+首次部署：
+
 ```bash
 docker compose up -d --build
+```
+
+更新部署，先删除旧容器再构建新镜像：
+
+```bash
+git pull
+docker compose down
+docker compose up -d --build
+```
+
+如需强制不用缓存重新构建：
+
+```bash
+git pull
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 停止：
