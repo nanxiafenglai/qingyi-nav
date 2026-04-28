@@ -33,7 +33,7 @@ createApp({
     if (!localStorage.getItem('nav_token')) location.href = '/login.html'
 
     async function load() {
-      const res = await fetch('/api/nav')
+      const res = await fetch('/api/nav', { headers: authHeaders() })
       const data = await res.json()
       site.value = data.site
       siteForm.value = { ...data.site }

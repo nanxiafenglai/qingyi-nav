@@ -9,6 +9,8 @@ createApp({
     const site = ref({ title: '清漪导航', subtitle: '加载中...', logo_text: '清' })
     const categories = ref([])
     const links = ref([])
+    const authed = ref(false)
+
 
     const allCategories = computed(() => [{ id: 0, name: '全部' }, ...categories.value])
     const filteredLinks = computed(() => {
@@ -23,14 +25,16 @@ createApp({
     const openLink = (item) => window.open(`/go/${item.id}`, '_blank', 'noopener,noreferrer')
 
     onMounted(async () => {
-      const res = await fetch('/api/nav')
+      const res = await fetch('/api/nav', { headers: { Authorization: `Bearer ${localStorage.getItem('nav_token') || ''}` } })
       const data = await res.json()
       site.value = data.site
       categories.value = data.categories
       links.value = data.links
+      authed.value = !!data.authed
+
     })
 
-    return { keyword, activeCategory, site, allCategories, links, filteredLinks, categoryCount, openLink, iconText }
+    return { keyword, activeCategory, site, allCategories, links, filteredLinks, categoryCount, openLink, iconText, authed }
   },
   template: `
   <main class="page-shell">
@@ -54,7 +58,7 @@ createApp({
         </button>
       </aside>
       <section class="links-section">
-        <div class="section-head"><div><p>当前展示</p><h2>{{ activeCategory }} · {{ filteredLinks.length }} 个入口</h2></div><span>SQLite 数据驱动</span></div>
+        <div class="section-head"><div><p>当前展示</p><h2>{{ activeCategory }} · {{ filteredLinks.length }} 个入口</h2></div><span>{{ authed ? '私密模式已开启' : '公开模式' }}</span></div>
         <div class="link-grid">
           <article v-for="item in filteredLinks" :key="item.id" class="link-card" @click="openLink(item)">
             <div class="icon-wrap" :style="{ '--accent': item.color }">{{ iconText[item.icon] || '✦' }}</div>

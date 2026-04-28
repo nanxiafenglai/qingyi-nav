@@ -11,7 +11,7 @@ ADMIN_USER=admin
 ADMIN_PASSWORD=admin123
 ```
 
-注意：管理员账号只会在数据库里不存在管理员时初始化；如果 `data/nav.sqlite` 已存在，请在后台修改密码。
+注意：管理员账号只会在 `admin_users` 表为空时初始化；只要已有任意管理员，更新镜像或修改环境变量都不会新增或覆盖账号密码。
 
 
 

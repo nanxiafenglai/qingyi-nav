@@ -51,7 +51,8 @@ function initDb() {
 
   db.prepare(`INSERT OR IGNORE INTO site_config (id,title,subtitle,logo_text,footer) VALUES (1,?,?,?,?)`)
     .run('清漪导航', '前台优雅展示，后台自由配置；让工具、文档与灵感各归其位。', '清', 'Powered by Vue 3 + Node.js + SQLite')
-  db.prepare(`INSERT OR IGNORE INTO admin_users (username,password_hash) VALUES (?,?)`).run(adminUser, sha256(adminPassword))
+  const adminCount = db.prepare('SELECT COUNT(*) AS total FROM admin_users').get().total
+  if (!adminCount) db.prepare(`INSERT INTO admin_users (username,password_hash) VALUES (?,?)`).run(adminUser, sha256(adminPassword))
 
   const count = db.prepare('SELECT COUNT(*) AS total FROM categories').get().total
   if (count) return
